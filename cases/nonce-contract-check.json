@@ -1,0 +1,72 @@
+{
+  "tool": "aegis-check-contract",
+  "version": "0.1.1",
+  "queriedAt": "2026-10-27T22:07:33.610Z",
+  "chainId": 56,
+  "address": "0x7538ba8C1A82E9706dB6d2463C15f69ADc01a17e",
+  "verification": {
+    "verified": true,
+    "match": "exact_match",
+    "creationMatch": "exact_match",
+    "runtimeMatch": "exact_match",
+    "verifiedAt": "2026-10-26T04:34:00Z",
+    "matchId": "57050758"
+  },
+  "sources": {
+    "fileCount": 1,
+    "projectFiles": [
+      "NONCE-FREE-MAINNET.sol"
+    ],
+    "libraryFileCount": 0,
+    "totalChars": 222670
+  },
+  "patterns": {
+    "project": {
+      "delegatecall": 0,
+      "selfdestruct": 0,
+      "permit": 0,
+      "approve": 14,
+      "setApprovalForAll": 6,
+      "transferFrom": 12,
+      "withdraw": 1,
+      "onlyOwner": 0,
+      "setterFunctions": [
+        "setPaused"
+      ]
+    },
+    "library": {
+      "delegatecall": 0,
+      "selfdestruct": 0,
+      "permit": 0,
+      "approve": 0,
+      "setApprovalForAll": 0,
+      "transferFrom": 0,
+      "withdraw": 0,
+      "onlyOwner": 0,
+      "setterFunctions": []
+    },
+    "perFile": {
+      "NONCE-FREE-MAINNET.sol": {
+        "delegatecall": 0,
+        "selfdestruct": 0,
+        "permit": 0,
+        "approve": 14,
+        "setApprovalForAll": 6,
+        "transferFrom": 12,
+        "withdraw": 1,
+        "onlyOwner": 0,
+        "setterFunctions": [
+          "setPaused"
+        ]
+      }
+    }
+  },
+  "verdict": {
+    "gate2": "ALLOW",
+    "reasons": [
+      "Verified exact_match; no critical/permit patterns in project source.",
+      "Evidence (attributed by audit, see case files): project source: 14x \"approve\"; project source: 6x \"setApprovalForAll\"; project source: 12x \"transferFrom\"; project source: 1x \"withdraw\"; project setters: setPaused"
+    ]
+  },
+  "disclaimer": "Gate 2 screening signal only. Pattern counts are raw occurrences in verified source (code and comments); a human/agent audit must attribute them before any execution decision. See the AEGIS case files."
+}

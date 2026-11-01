@@ -1,0 +1,82 @@
+{
+  "tool": "aegis-check-contract",
+  "version": "0.1.1",
+  "queriedAt": "2026-10-27T22:07:32.756Z",
+  "chainId": 56,
+  "address": "0x00fbc656caa753a5280835bf9e849c4c0aff9bf4",
+  "verification": {
+    "verified": true,
+    "match": "exact_match",
+    "creationMatch": "exact_match",
+    "runtimeMatch": "exact_match",
+    "verifiedAt": "2026-10-27T13:48:49Z",
+    "matchId": "57250071"
+  },
+  "sources": {
+    "fileCount": 17,
+    "projectFiles": [
+      "contracts/Hashstone.sol"
+    ],
+    "libraryFileCount": 16,
+    "totalChars": 119869
+  },
+  "patterns": {
+    "project": {
+      "delegatecall": 0,
+      "selfdestruct": 0,
+      "permit": 0,
+      "approve": 0,
+      "setApprovalForAll": 0,
+      "transferFrom": 0,
+      "withdraw": 1,
+      "onlyOwner": 7,
+      "setterFunctions": [
+        "setBaseURI",
+        "setContractURI",
+        "setOpen",
+        "setPrice",
+        "setRoyalty",
+        "setTarget"
+      ]
+    },
+    "library": {
+      "delegatecall": 0,
+      "selfdestruct": 0,
+      "permit": 0,
+      "approve": 7,
+      "setApprovalForAll": 7,
+      "transferFrom": 6,
+      "withdraw": 0,
+      "onlyOwner": 5,
+      "setterFunctions": []
+    },
+    "perFile": {
+      "contracts/Hashstone.sol": {
+        "delegatecall": 0,
+        "selfdestruct": 0,
+        "permit": 0,
+        "approve": 0,
+        "setApprovalForAll": 0,
+        "transferFrom": 0,
+        "withdraw": 1,
+        "onlyOwner": 7,
+        "setterFunctions": [
+          "setBaseURI",
+          "setContractURI",
+          "setOpen",
+          "setPrice",
+          "setRoyalty",
+          "setTarget"
+        ]
+      }
+    }
+  },
+  "verdict": {
+    "gate2": "ALLOW",
+    "reasons": [
+      "Verified exact_match; no critical/permit patterns in project source.",
+      "Evidence (attributed by audit, see case files): project source: 1x \"withdraw\"; project source: 7x \"onlyOwner\"; project setters: setBaseURI, setContractURI, setOpen, setPrice, setRoyalty, setTarget"
+    ]
+  },
+  "disclaimer": "Gate 2 screening signal only. Pattern counts are raw occurrences in verified source (code and comments); a human/agent audit must attribute them before any execution decision. See the AEGIS case files."
+}
