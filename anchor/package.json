@@ -1,0 +1,21 @@
+{
+  "name": "near-anchor",
+  "version": "1.0.0",
+  "description": "AEGIS report-anchor registry on NEAR testnet: minimal contract + anchor tooling.",
+  "main": "index.js",
+  "scripts": {
+    "build": "near-sdk-js build src/contract.ts build/contract.wasm",
+    "deploy": "node deploy.mjs",
+    "anchor": "node anchor.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "near-api-js": "^7.4.0",
+    "near-sdk-js": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.18.126"
+  }
+}

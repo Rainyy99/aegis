@@ -6,14 +6,27 @@ yarn-error.log*
 package-lock.json
 pnpm-lock.yaml
 
-# Runtime / local outputs
-*.log
-.DS_Store
+# Credentials — NEVER committed (NEAR keys live in a local file only;
+# the anchor scripts read them at runtime, see anchor/README.md)
+.near-credentials/
 .env
 .env.*
 !.env.example
+
+# Runtime / local outputs
+*.log
+.DS_Store
+*.zip
+
+# Anchor build artifacts (local only; rebuild with anchor/ npm run build)
+anchor/build/
 
 # Scan outputs generated locally (reference outputs in cases/ are committed)
 *-report.json
 out/
 tmp/
+
+# …but the two runner reports whose hashes are anchored on NEAR testnet
+# ARE committed evidence — they must not be swallowed by the rule above:
+!anchor/reports/
+!anchor/reports/*.json

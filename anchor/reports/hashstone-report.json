@@ -1,0 +1,77 @@
+{
+  "tool": "aegis",
+  "version": "1.0.0",
+  "generatedAt": "2026-11-01T03:27:13.138Z",
+  "kit": {
+    "gate1": "1.0.0",
+    "gate2": "0.2.0",
+    "gate3": "1.0.0",
+    "gate4": "1.0.0"
+  },
+  "inputs": {
+    "contract": {
+      "address": "0x00fbc656caa753a5280835bf9e849c4c0aff9bf4",
+      "chainId": "56"
+    },
+    "provenance": null,
+    "typedData": null,
+    "signatureContext": null,
+    "brief": null
+  },
+  "gates": {
+    "gate1": {
+      "status": "SKIPPED",
+      "verdict": null,
+      "reasons": [
+        "Not run: no claim supplied (--claim)."
+      ],
+      "evidence": null,
+      "tool": "aegis-check-provenance",
+      "version": "1.0.0"
+    },
+    "gate2": {
+      "status": "VERDICT",
+      "verdict": "ALLOW",
+      "reasons": [
+        "Verified exact_match; no critical/permit patterns in project source.",
+        "Evidence (attributed by audit, see case files): project source: 1x \"withdraw\"; project source: 7x \"onlyOwner\"; project setters: setBaseURI, setContractURI, setOpen, setPrice, setRoyalty, setTarget"
+      ],
+      "evidence": {
+        "address": "0x00fbc656caa753a5280835bf9e849c4c0aff9bf4",
+        "chainId": 56,
+        "verified": true,
+        "match": "exact_match"
+      },
+      "tool": "aegis-check-contract",
+      "version": "0.2.0"
+    },
+    "gate3": {
+      "status": "SKIPPED",
+      "verdict": null,
+      "reasons": [
+        "Not run: no typed-data file supplied (--typed-data)."
+      ],
+      "evidence": null,
+      "tool": "aegis-check-signature",
+      "version": "1.0.0"
+    },
+    "gate4": {
+      "status": "SKIPPED",
+      "verdict": null,
+      "reasons": [
+        "Not run: no brief/text file supplied (--brief)."
+      ],
+      "evidence": null,
+      "tool": "aegis-check-instructions",
+      "version": "1.0.0"
+    }
+  },
+  "overall": {
+    "verdict": "ALLOW",
+    "incomplete": false,
+    "incompleteReasons": [],
+    "rule": "Worst verdict among gates that produced one (BLOCK > WARN > ALLOW); any applicable gate with NO_VERDICT caps the overall at WARN and sets incomplete: true; SKIPPED gates do not affect the merge."
+  },
+  "reportHash": "79729980bfa8fe4ce1b4dde58766b65cba21987364473659190c744d66237d8d",
+  "disclaimer": "AEGIS screening report — per-gate signals merged, not an audit. Each gate's own limitations apply (see AUDIT.md); the full per-gate reports are available from the individual gate CLIs. reportHash covers this report body (canonical form, volatile fields excluded) so the verdict can be re-verified against its NEAR anchor without trusting the machine that produced it."
+}

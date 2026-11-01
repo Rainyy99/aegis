@@ -1,0 +1,129 @@
+{
+  "tool": "aegis",
+  "version": "1.0.0",
+  "generatedAt": "2026-11-01T03:27:06.520Z",
+  "kit": {
+    "gate1": "1.0.0",
+    "gate2": "0.2.0",
+    "gate3": "1.0.0",
+    "gate4": "1.0.0"
+  },
+  "inputs": {
+    "contract": null,
+    "provenance": null,
+    "typedData": {
+      "file": "tests/fixtures/permit.json",
+      "sha256": "67e98be0a1478538f78ff0307869d2fae6a7b3a41ebf17fea05db2fc6dadc7c2",
+      "bytes": 686
+    },
+    "signatureContext": {},
+    "brief": {
+      "file": "/home/hatch/workspace/hackathon-near/aegis-repo/cases/nonce.md",
+      "sha256": "f7c796c87cc72b10ac246ca2f362668a86446bbf9c041992ac941c8eb3551df9",
+      "bytes": 5034
+    }
+  },
+  "gates": {
+    "gate2": {
+      "status": "SKIPPED",
+      "verdict": null,
+      "reasons": [
+        "Not run: no contract address supplied (--contract)."
+      ],
+      "evidence": null,
+      "tool": "aegis-check-contract",
+      "version": "0.2.0"
+    },
+    "gate1": {
+      "status": "SKIPPED",
+      "verdict": null,
+      "reasons": [
+        "Not run: no claim supplied (--claim)."
+      ],
+      "evidence": null,
+      "tool": "aegis-check-provenance",
+      "version": "1.0.0"
+    },
+    "gate3": {
+      "status": "VERDICT",
+      "verdict": "BLOCK",
+      "reasons": [
+        "primaryType \"Permit\" is a Permit shape — rejected by the signature SOP.",
+        "forbidden field \"spender\" present in the payload (message or declared types) — rejected by the signature SOP.",
+        "forbidden field \"value\" present in the payload (message or declared types) — rejected by the signature SOP."
+      ],
+      "evidence": {
+        "decoded": {
+          "domain": {
+            "name": "Example Token",
+            "version": "1",
+            "chainId": 56,
+            "verifyingContract": "0x2222222222222222222222222222222222222222"
+          },
+          "primaryType": "Permit",
+          "messageFields": [
+            "deadline",
+            "nonce",
+            "owner",
+            "spender",
+            "value"
+          ],
+          "verifyingContractClass": "unclassified"
+        },
+        "forbiddenFieldsFound": [
+          "spender",
+          "value"
+        ]
+      },
+      "tool": "aegis-check-signature",
+      "version": "1.0.0"
+    },
+    "gate4": {
+      "status": "VERDICT",
+      "verdict": "BLOCK",
+      "reasons": [
+        "Challenge→sign→submit sequence detected (stages: obtain-challenge, sign, submit) — one server-orchestrated flow spread across the text, the Nonce shape: the counterparty issues, the agent signs, the agent submits.",
+        "Server-sign-submit instructions appear together with a direction to connect to an external server — a foreign server both instructs the agent and feeds it payloads to sign.",
+        "Weighted injection score 15 >= BLOCK threshold 8.",
+        "external-server-connect: 2 hit(s) × weight 4 — Directing the agent to connect to a counterparty-controlled server. (see excerpts)",
+        "server-sign-submit: 1 hit(s) × weight 5 — Sign-and-submit flow whose payload comes from the counterparty's server. (see excerpts)",
+        "agent-addressed-instruction: 1 hit(s) × weight 2 — Text written for the agent to follow, not for a human to read. (see excerpts)"
+      ],
+      "evidence": {
+        "score": 15,
+        "thresholds": {
+          "warn": 3,
+          "block": 8
+        },
+        "sequenceDetected": true,
+        "triggeredSignals": [
+          {
+            "key": "external-server-connect",
+            "count": 2,
+            "weighted": 8
+          },
+          {
+            "key": "server-sign-submit",
+            "count": 1,
+            "weighted": 5
+          },
+          {
+            "key": "agent-addressed-instruction",
+            "count": 1,
+            "weighted": 2
+          }
+        ]
+      },
+      "tool": "aegis-check-instructions",
+      "version": "1.0.0"
+    }
+  },
+  "overall": {
+    "verdict": "BLOCK",
+    "incomplete": false,
+    "incompleteReasons": [],
+    "rule": "Worst verdict among gates that produced one (BLOCK > WARN > ALLOW); any applicable gate with NO_VERDICT caps the overall at WARN and sets incomplete: true; SKIPPED gates do not affect the merge."
+  },
+  "reportHash": "7c7cf5b8979c312f790713f94e650e8d0b83c163570783b16ae171802122060f",
+  "disclaimer": "AEGIS screening report — per-gate signals merged, not an audit. Each gate's own limitations apply (see AUDIT.md); the full per-gate reports are available from the individual gate CLIs. reportHash covers this report body (canonical form, volatile fields excluded) so the verdict can be re-verified against its NEAR anchor without trusting the machine that produced it."
+}

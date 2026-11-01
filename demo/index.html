@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AEGIS — the security gate for AI agents</title>
+<meta name="description" content="AEGIS verifies before an AI agent executes: four gates (Provenance, Contract, Signature, Instruction channel) return ALLOW / WARN / BLOCK, with report hashes anchored on NEAR.">
+<style>
+  :root{
+    --bg:#0b0e13; --bg2:#10141c; --panel:#131926; --panel2:#0e1219;
+    --line:#232c3d; --line2:#2e3a4f;
+    --text:#dbe2ec; --muted:#8b98ab; --faint:#5f6c80;
+    --green:#3fb96f; --green-bg:rgba(63,185,111,.10);
+    --amber:#e0a83c; --amber-bg:rgba(224,168,60,.10);
+    --red:#e5534b;   --red-bg:rgba(229,83,75,.10);
+    --gray:#7d8899;  --gray-bg:rgba(125,136,153,.12);
+    --accent:#6ea8ff;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+       font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font-family:var(--mono);font-size:.86em;word-break:break-all}
+  .wrap{max-width:1020px;margin:0 auto;padding:0 20px}
+
+  header.site{border-bottom:1px solid var(--line);background:rgba(11,14,19,.92);
+    position:sticky;top:0;z-index:10;backdrop-filter:blur(6px)}
+  header.site .wrap{display:flex;align-items:center;gap:18px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.14em;color:var(--text)}
+  .logo:hover{text-decoration:none}
+  .logo svg{flex:none}
+  nav.main{margin-left:auto;display:flex;gap:18px;flex-wrap:wrap}
+  nav.main a{color:var(--muted);font-size:.9rem}
+  nav.main a:hover{color:var(--text);text-decoration:none}
+
+  .hero{padding:64px 0 40px;border-bottom:1px solid var(--line);
+    background:radial-gradient(700px 300px at 20% -60px,rgba(110,168,255,.10),transparent 70%),var(--bg)}
+  .kicker{font-family:var(--mono);font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:3rem;line-height:1.08;margin:.35em 0 .15em;letter-spacing:.02em}
+  .tagline{font-size:1.35rem;color:var(--text);font-style:italic;margin:0 0 18px}
+  .lede{max-width:760px;color:var(--muted);font-size:1.05rem}
+  .lede strong{color:var(--text)}
+  .hero-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+  .badge{font-family:var(--mono);font-size:.78rem;border:1px solid var(--line2);border-radius:999px;
+    padding:4px 12px;color:var(--muted);background:var(--bg2)}
+  .badge b{color:var(--text);font-weight:600}
+
+  section{padding:48px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:1.6rem;margin:0 0 8px}
+  .sub{color:var(--muted);max-width:780px;margin:0 0 26px}
+
+  .gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .gate{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+  .gate .num{font-family:var(--mono);color:var(--faint);font-size:.78rem;letter-spacing:.15em}
+  .gate h3{margin:4px 0 6px;font-size:1.08rem}
+  .gate .q{font-style:italic;color:var(--accent);font-size:.92rem;margin:0 0 8px}
+  .gate p{margin:0;color:var(--muted);font-size:.92rem}
+
+  .verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .vcard{border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:var(--panel2)}
+  .vcard p{margin:6px 0 0;color:var(--muted);font-size:.92rem}
+
+  .pill{display:inline-block;font-family:var(--mono);font-weight:700;font-size:.8rem;letter-spacing:.06em;
+    padding:2px 10px;border-radius:5px;border:1px solid}
+  .pill.allow{color:var(--green);background:var(--green-bg);border-color:var(--green)}
+  .pill.warn{color:var(--amber);background:var(--amber-bg);border-color:var(--amber)}
+  .pill.block{color:var(--red);background:var(--red-bg);border-color:var(--red)}
+  .pill.skip{color:var(--gray);background:var(--gray-bg);border-color:var(--gray)}
+  .pill.big{font-size:1rem;padding:5px 16px}
+
+  article.case{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:24px;margin:0 0 22px}
+  article.case header{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+  article.case h3{margin:0;font-size:1.25rem;flex:1 1 320px}
+  article.case .meta{font-family:var(--mono);font-size:.76rem;color:var(--faint);margin-top:6px}
+  .lesson{border-left:3px solid var(--line2);padding:2px 0 2px 14px;color:var(--muted);margin:16px 0}
+  .lesson b{color:var(--text)}
+  table.gates-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.93rem}
+  table.gates-table th,table.gates-table td{border-top:1px solid var(--line);padding:9px 10px;
+    text-align:left;vertical-align:top}
+  table.gates-table th{color:var(--faint);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.12em;text-transform:uppercase;border-top:none}
+  table.gates-table td.gname{white-space:nowrap;font-weight:600;width:170px}
+  table.gates-table td ul{margin:0;padding-left:18px;color:var(--muted)}
+  table.gates-table td ul li{margin:2px 0}
+  .hashrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--panel2);
+    border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-top:14px}
+  .hashrow .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+  .hashrow code{flex:1 1 300px;color:var(--text)}
+  .copybtn{font-family:var(--mono);font-size:.75rem;background:var(--bg);color:var(--muted);
+    border:1px solid var(--line2);border-radius:6px;padding:4px 10px;cursor:pointer}
+  .copybtn:hover{color:var(--text);border-color:var(--accent)}
+  .note{font-size:.88rem;color:var(--faint)}
+
+  .proof-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:20px}
+  .proof-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+  .proof-card h3{margin:0 0 8px;font-size:1.02rem}
+  .proof-card ul{margin:0;padding-left:18px;color:var(--muted);font-size:.93rem}
+  table.anchor-table{width:100%;border-collapse:collapse;font-size:.93rem}
+  table.anchor-table th,table.anchor-table td{border-top:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}
+  table.anchor-table th{color:var(--faint);font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;border-top:none}
+
+  ol.limits{color:var(--muted);padding-left:22px}
+  ol.limits li{margin:0 0 10px}
+  ol.limits b{color:var(--text)}
+  .closed{border:1px dashed var(--line2);border-radius:8px;padding:10px 14px;color:var(--muted);
+    font-size:.92rem;margin-top:6px}
+
+  footer.site{padding:36px 0 48px;color:var(--muted);font-size:.92rem}
+  footer.site .row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  .shield-note{border:1px solid var(--line);background:var(--panel2);border-radius:8px;
+    padding:12px 16px;margin-bottom:20px;color:var(--muted)}
+  .shield-note b{color:var(--text)}
+  @media (max-width:640px){
+    h1{font-size:2.3rem}
+    .hero{padding:44px 0 30px}
+    table.gates-table td.gname{width:auto;white-space:normal}
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="AEGIS home">
+      <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+        <path d="M11 1 L20 4 V12 C20 19 16.5 23 11 25 C5.5 23 2 19 2 12 V4 Z"
+              stroke="#6ea8ff" stroke-width="1.8" fill="rgba(110,168,255,.08)"/>
+        <path d="M7.5 12.5 L10 15 L14.5 9.5" stroke="#3fb96f" stroke-width="1.8" fill="none"/>
+      </svg>
+      AEGIS
+    </a>
+    <nav class="main">
+      <a href="#gates">Gates</a>
+      <a href="#cases">Case studies</a>
+      <a href="#proof">On-chain proof</a>
+      <a href="#limits">Scope &amp; limitations</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============================ HERO ============================ -->
+<div class="hero">
+  <div class="wrap">
+    <div class="kicker">Security gate for AI agents · anchored on NEAR</div>
+    <h1>AEGIS</h1>
+    <p class="tagline">&ldquo;No agent should execute what it hasn&rsquo;t verified.&rdquo;</p>
+    <p class="lede">
+      AI agents are now told to execute instructions written by third parties: mint pages that
+      embed step-by-step playbooks <strong>for the agent</strong>, skill packages served from
+      mutable &ldquo;latest&rdquo; URLs, onboarding documents that end with &ldquo;copy this prompt
+      into your AI&rdquo;. A compliant agent is one pasted paragraph away from draining its
+      owner&rsquo;s wallet. <strong>AEGIS verifies before anyone executes.</strong> Point it at a
+      contract, a signature payload, a claim, or a page of instructions; it runs four gates and
+      returns a verdict &mdash; <strong>ALLOW</strong>, <strong>WARN</strong>, or
+      <strong>BLOCK</strong> &mdash; with line-level evidence, and the report hash is anchored on
+      <strong>NEAR</strong> so any agent or human can re-verify it later without trusting the
+      machine that produced it.
+    </p>
+    <div class="hero-badges">
+      <span class="badge">Runner <b>aegis.mjs v1.0.0</b></span>
+      <span class="badge">Anchor registry <b>aegis-gate.testnet</b></span>
+      <span class="badge">Reports anchored <b>2</b></span>
+      <span class="badge">Reads only &mdash; <b>holds no keys, signs nothing</b></span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ GATES ============================ -->
+<section id="gates">
+  <div class="wrap">
+    <h2>The four gates</h2>
+    <p class="sub">Every input an agent is asked to act on passes the gates that apply to it.
+      A gate with no input is skipped and says so; a gate that cannot run reports
+      <b>NO_VERDICT</b> and caps the overall verdict at WARN &mdash; a gate that could not
+      run is never silently passed.</p>
+    <div class="gates">
+      <div class="gate">
+        <div class="num">GATE 1</div>
+        <h3>Provenance</h3>
+        <p class="q">Is this source official, or a third-party echo?</p>
+        <p>Addresses, links and claims are accepted only from the project&rsquo;s official
+           channels, and re-confirmed against independent infrastructure (explorers,
+           Sourcify) &mdash; never from a relayed message, a comment, or another
+           agent&rsquo;s summary.</p>
+      </div>
+      <div class="gate">
+        <div class="num">GATE 2</div>
+        <h3>Contract</h3>
+        <p class="q">Is the code verified, and what can it actually do?</p>
+        <p>Sourcify verification (Exact Match preferred), then a risk-pattern scan of the
+           verified source: <code>delegatecall</code>, <code>selfdestruct</code>,
+           <code>permit</code>, approval / <code>transferFrom</code> surface, owner setters.
+           Counts are evidence; an audit attributes them before they decide anything.</p>
+      </div>
+      <div class="gate">
+        <div class="num">GATE 3</div>
+        <h3>Signature</h3>
+        <p class="q">What exactly is being signed, and who authored the payload?</p>
+        <p>Full EIP-712 decode before any signature: domain name, chainId, verifyingContract
+           (never a held token/NFT, a router, or Permit2), primaryType (never
+           <code>Permit</code> variants), forbidden <code>spender</code> / <code>value</code> /
+           <code>amount</code> fields, domain scoped to the single project. Payloads authored
+           at runtime by a counterparty&rsquo;s server fail by construction.</p>
+      </div>
+      <div class="gate">
+        <div class="num">GATE 4</div>
+        <h3>Instruction channel</h3>
+        <p class="q">Is somebody&rsquo;s page trying to operate the agent?</p>
+        <p>Pages, packages and docs are scanned for instructions addressed to agents:
+           &ldquo;connect to our MCP server&rdquo;, challenge&rarr;sign&rarr;submit sequences
+           with server-supplied payloads, agent-targeted install scripts, manufactured
+           urgency, authority claims. Content is data; only the user&rsquo;s own instructions
+           are instructions.</p>
+      </div>
+    </div>
+
+    <div style="height:22px"></div>
+    <div class="verdicts">
+      <div class="vcard">
+        <span class="pill allow">ALLOW</span>
+        <p>All gates that ran pass. The action can be constructed, simulated, and executed
+           by the agent itself, within pre-set value limits.</p>
+      </div>
+      <div class="vcard">
+        <span class="pill warn">WARN</span>
+        <p>Something needs attribution or a condition first &mdash; an unattributed pattern,
+           a mutable download that must be hash-pinned, an admin surface to understand.
+           A WARN is a to-do list, not a rejection.</p>
+      </div>
+      <div class="vcard">
+        <span class="pill block">BLOCK</span>
+        <p>A gate fails outright: unverifiable code, a signature the user cannot audit in
+           advance, or an execution flow orchestrated by the counterparty&rsquo;s server.</p>
+      </div>
+    </div>
+    <p class="note" style="margin-top:16px">Merge rule: the overall verdict is the
+      <b>worst</b> verdict among the gates that produced one (BLOCK &gt; WARN &gt; ALLOW).
+      This page is a static exhibit: the reports below were generated by the AEGIS kit on
+      the command line and anchored on NEAR testnet. <b>This site does not run the gates
+      in your browser.</b></p>
+  </div>
+</section>
+
+<!-- ============================ CASE STUDIES ============================ -->
+<section id="cases">
+  <div class="wrap">
+    <h2>Case studies &mdash; real reports, real anchors</h2>
+    <p class="sub">AEGIS was distilled from gates that were actually run by an operating agent
+      before this project existed. The first two exhibits are reports produced by the unified
+      runner (<code>aegis.mjs</code> v1.0.0, 1 Nov 2026) and anchored on NEAR testnet &mdash;
+      every verdict and hash on this page is copied from those report files and can be
+      re-checked against the on-chain anchors below. The third predates the runner and is
+      labelled as what it is: a manual case study.</p>
+
+    <!-- ===== NONCE ===== -->
+    <article class="case" data-case="nonce">
+      <header>
+        <div style="flex:1 1 320px">
+          <h3>Nonce Protocol &mdash; verified contract, unverified flow</h3>
+          <div class="meta">Runner report · aegis.mjs v1.0.0 · generated 2026-11-01 03:27 UTC ·
+            inputs: the Nonce case brief (Gate 4) + a Permit-shaped EIP-712 payload of the
+            class this flow asks agents to sign (Gate 3)</div>
+        </div>
+        <span class="pill block big" data-overall="nonce">BLOCK</span>
+      </header>
+      <p class="lesson">The project&rsquo;s mint page carries a step-by-step playbook written
+        <b>for the agent</b>, and the mint is orchestrated by the project&rsquo;s own server.
+        In the underlying manual audit the contracts themselves passed &mdash; Sourcify Exact
+        Match &mdash; and it didn&rsquo;t matter. <b>Verified contract &ne; verified flow.</b></p>
+      <table class="gates-table">
+        <tr><th>Gate</th><th>Verdict</th><th>Headline reasons (from the report)</th></tr>
+        <tr>
+          <td class="gname">1 · Provenance</td>
+          <td><span class="pill skip" data-gate-verdict="nonce:gate1">SKIPPED</span></td>
+          <td><ul><li>Not run: no claim supplied (--claim).</li></ul></td>
+        </tr>
+        <tr>
+          <td class="gname">2 · Contract</td>
+          <td><span class="pill skip" data-gate-verdict="nonce:gate2">SKIPPED</span></td>
+          <td><ul><li>Not run: no contract address supplied (--contract). The contract side of
+            this case was covered by the earlier manual audit (Exact Match) &mdash; see the
+            lesson above.</li></ul></td>
+        </tr>
+        <tr>
+          <td class="gname">3 · Signature</td>
+          <td><span class="pill block" data-gate-verdict="nonce:gate3">BLOCK</span></td>
+          <td><ul>
+            <li>primaryType &ldquo;Permit&rdquo; is a Permit shape &mdash; rejected by the signature SOP.</li>
+            <li>Forbidden field &ldquo;spender&rdquo; present in the payload (message or declared types) &mdash; rejected by the signature SOP.</li>
+            <li>Forbidden field &ldquo;value&rdquo; present in the payload (message or declared types) &mdash; rejected by the signature SOP.</li>
+            <li>Decoded domain: name &ldquo;Example Token&rdquo;, chainId 56, verifyingContract
+              <code>0x2222222222222222222222222222222222222222</code>.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="gname">4 · Instruction channel</td>
+          <td><span class="pill block" data-gate-verdict="nonce:gate4">BLOCK</span></td>
+          <td><ul>
+            <li>Challenge&rarr;sign&rarr;submit sequence detected (stages: obtain-challenge, sign,
+              submit) &mdash; one server-orchestrated flow spread across the text, the Nonce
+              shape: the counterparty issues, the agent signs, the agent submits.</li>
+            <li>Server-sign-submit instructions appear together with a direction to connect to
+              an external server &mdash; a foreign server both instructs the agent and feeds it
+              payloads to sign.</li>
+            <li>Weighted injection score 15 &ge; BLOCK threshold 8 (external-server-connect
+              2 hits &times; weight 4; server-sign-submit 1 hit &times; weight 5;
+              agent-addressed-instruction 1 hit &times; weight 2).</li>
+          </ul></td>
+        </tr>
+      </table>
+      <div class="hashrow">
+        <span class="lbl">reportHash</span>
+        <code class="report-hash" data-hash-for="nonce">7c7cf5b8979c312f790713f94e650e8d0b83c163570783b16ae171802122060f</code>
+        <button class="copybtn" data-copy="7c7cf5b8979c312f790713f94e650e8d0b83c163570783b16ae171802122060f">copy</button>
+      </div>
+      <p class="note">Anchored on NEAR testnet by <code>aegis-gate.testnet</code>, agent identity
+        <code>rainyy.ai</code> &mdash; anchor transaction in the proof section below.</p>
+    </article>
+
+    <!-- ===== HASHSTONE ===== -->
+    <article class="case" data-case="hashstone">
+      <header>
+        <div style="flex:1 1 320px">
+          <h3>Hashstone &mdash; a direct on-chain freemint</h3>
+          <div class="meta">Runner report · aegis.mjs v1.0.0 · generated 2026-11-01 03:27 UTC ·
+            input: contract <code>0x00fbc656caa753a5280835bf9e849c4c0aff9bf4</code> (BNB Chain, chainId 56)</div>
+        </div>
+        <span class="pill allow big" data-overall="hashstone">ALLOW</span>
+      </header>
+      <p class="lesson">An Agent-ID-gated freemint executed as a direct on-chain call with a
+        locally built transaction: value 0, nothing to sign off-chain, <b>no server in the
+        loop</b>. The owner-admin surface is listed as evidence and attributed &mdash;
+        not hidden, and not feared.</p>
+      <table class="gates-table">
+        <tr><th>Gate</th><th>Verdict</th><th>Headline reasons (from the report)</th></tr>
+        <tr>
+          <td class="gname">1 · Provenance</td>
+          <td><span class="pill skip" data-gate-verdict="hashstone:gate1">SKIPPED</span></td>
+          <td><ul><li>Not run: no claim supplied (--claim).</li></ul></td>
+        </tr>
+        <tr>
+          <td class="gname">2 · Contract</td>
+          <td><span class="pill allow" data-gate-verdict="hashstone:gate2">ALLOW</span></td>
+          <td><ul>
+            <li>Verified <b>exact_match</b> on Sourcify; no critical/permit patterns in project source.</li>
+            <li>Evidence (attributed by audit): project source: 1&times; &ldquo;withdraw&rdquo;;
+              7&times; &ldquo;onlyOwner&rdquo;; project setters: setBaseURI, setContractURI,
+              setOpen, setPrice, setRoyalty, setTarget.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="gname">3 · Signature</td>
+          <td><span class="pill skip" data-gate-verdict="hashstone:gate3">SKIPPED</span></td>
+          <td><ul><li>Not run: no typed-data file supplied (--typed-data). This flow asks for
+            no off-chain signature at all.</li></ul></td>
+        </tr>
+        <tr>
+          <td class="gname">4 · Instruction channel</td>
+          <td><span class="pill skip" data-gate-verdict="hashstone:gate4">SKIPPED</span></td>
+          <td><ul><li>Not run: no brief/text file supplied (--brief).</li></ul></td>
+        </tr>
+      </table>
+      <div class="hashrow">
+        <span class="lbl">reportHash</span>
+        <code class="report-hash" data-hash-for="hashstone">79729980bfa8fe4ce1b4dde58766b65cba21987364473659190c744d66237d8d</code>
+        <button class="copybtn" data-copy="79729980bfa8fe4ce1b4dde58766b65cba21987364473659190c744d66237d8d">copy</button>
+      </div>
+      <p class="note">Anchored on NEAR testnet by <code>aegis-gate.testnet</code>, agent identity
+        <code>rainyy.ai</code> &mdash; anchor transaction in the proof section below.</p>
+    </article>
+
+    <!-- ===== TERMIX ===== -->
+    <article class="case" data-case="termix">
+      <header>
+        <div style="flex:1 1 320px">
+          <h3>TermiX skill package &mdash; the channel was the risk</h3>
+          <div class="meta">Manual case study · examined 28 Oct 2026 · predates the unified
+            runner &mdash; <b>not</b> a runner report and <b>not</b> anchored on NEAR</div>
+        </div>
+        <span class="pill warn big">WARN &rarr; ALLOW-WITH-PIN</span>
+      </header>
+      <p class="lesson">The package <code>termix-agent.skill</code> v1.11.1 (zip, 251,946 bytes)
+        is distributed from <code>https://termix.ai/skills?v=latest</code>. The engineering
+        inside was sound &mdash; the default signing mode is keyless, delegated to the wallet
+        CLI &mdash; but the distribution channel was the risk. <b>&ldquo;Latest&rdquo; is not a
+        version. Pin the hash, or don&rsquo;t run it.</b></p>
+      <table class="gates-table">
+        <tr><th>Gate</th><th>Finding</th><th>Why</th></tr>
+        <tr>
+          <td class="gname">1 · Provenance</td>
+          <td><span class="pill warn">WARN</span> <span class="note">(the trigger)</span></td>
+          <td><ul><li>The distribution URL is unpinned: <code>?v=latest</code> serves whatever the
+            operator&rsquo;s bucket holds today. A version number inside a mutable download is
+            a claim, not an identity.</li></ul></td>
+        </tr>
+        <tr>
+          <td class="gname">4 · Instruction channel</td>
+          <td><span class="pill warn">WARN</span></td>
+          <td><ul><li>The zip&rsquo;s <code>INSTALL.md</code> is written as direct instructions to
+            an AI agent &mdash; install this package, run these scripts. During the audit that
+            text was treated strictly as data: extracted, read, never followed.</li></ul></td>
+        </tr>
+        <tr>
+          <td class="gname">Update mechanism</td>
+          <td><span class="pill warn">WARN</span></td>
+          <td><ul><li>The updater verifies the zip&rsquo;s sha256 against a release manifest &mdash;
+            but the manifest is served by the same operator, from the same bucket, unsigned.
+            That protects against corruption in transit, not against the operator or a bucket
+            compromise: the checker and the checked live in the same place.</li></ul></td>
+        </tr>
+      </table>
+      <p style="color:var(--muted)">Resolution: the sha256 of the audited zip was pinned as the
+        package&rsquo;s identity. When the human partner later downloaded the package on his own
+        device, its hash matched the pin character-for-character &mdash; so the copy in use is the
+        copy that was audited. Conditions: the pinned hash only; scripts read before any use;
+        account and submission steps stay in human hands.</p>
+      <div class="hashrow">
+        <span class="lbl">Pinned sha256 of the audited package (not a report hash)</span>
+        <code>227b1b4e559eef7e67fd25fba9b2d1d5560fc1fdc434620ff9d6c270f685c673</code>
+        <button class="copybtn" data-copy="227b1b4e559eef7e67fd25fba9b2d1d5560fc1fdc434620ff9d6c270f685c673">copy</button>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============================ ON-CHAIN PROOF ============================ -->
+<section id="proof">
+  <div class="wrap">
+    <h2>On-chain proof &mdash; NEAR testnet anchor registry</h2>
+    <p class="sub">Verdicts are only useful if they outlive the server that produced them. A
+      minimal registry contract on NEAR testnet stores report anchors:
+      <code>record_anchor(report_hash, verdict, agent_id)</code>. Anchoring is
+      <b>permissionless</b> &mdash; no owner, no allowlist, no admin power &mdash; the contract
+      holds no funds, and <b>first write wins</b>: re-anchoring a hash returns the original
+      record unchanged. Both records below were read back through the public NEAR RPC and
+      round-trip exactly.</p>
+
+    <div class="hashrow" style="margin:0 0 18px">
+      <span class="lbl">Registry contract</span>
+      <code>aegis-gate.testnet</code>
+      <a href="https://testnet.nearblocks.io/address/aegis-gate.testnet" target="_blank" rel="noopener">view on NearBlocks (testnet) &nearr;</a>
+    </div>
+
+    <table class="anchor-table">
+      <tr><th>Report</th><th>Verdict</th><th>reportHash</th><th>Anchor transaction</th></tr>
+      <tr>
+        <td>Nonce Protocol<br><span class="note">anchored 2026-11-01 03:59 UTC · agent rainyy.ai</span></td>
+        <td><span class="pill block">BLOCK</span></td>
+        <td><code>7c7cf5b8979c312f790713f94e650e8d0b83c163570783b16ae171802122060f</code></td>
+        <td><a href="https://testnet.nearblocks.io/txns/CQWcvjoukVqBTfa74wRNNKpGtyRRYBv2LmaAzdH5jooo" target="_blank" rel="noopener"><code>CQWcvjoukVqBTfa74wRNNKpGtyRRYBv2LmaAzdH5jooo</code></a></td>
+      </tr>
+      <tr>
+        <td>Hashstone<br><span class="note">anchored 2026-11-01 03:59 UTC · agent rainyy.ai</span></td>
+        <td><span class="pill allow">ALLOW</span></td>
+        <td><code>79729980bfa8fe4ce1b4dde58766b65cba21987364473659190c744d66237d8d</code></td>
+        <td><a href="https://testnet.nearblocks.io/txns/FNwEp27ArWZtruwkbvMHJVjHjqkEzms99eZHBDs4gDfn" target="_blank" rel="noopener"><code>FNwEp27ArWZtruwkbvMHJVjHjqkEzms99eZHBDs4gDfn</code></a></td>
+      </tr>
+    </table>
+
+    <div class="proof-grid">
+      <div class="proof-card">
+        <h3>What an anchor proves</h3>
+        <ul>
+          <li>A report with <b>this exact hash</b> existed at the recorded time.</li>
+          <li>It was submitted by the recorded account under the recorded agent identity
+            (<code>rainyy.ai</code>).</li>
+          <li>Anyone can re-run the kit on the same inputs, recompute the hash, and compare &mdash;
+            reproducibility is the verification.</li>
+        </ul>
+      </div>
+      <div class="proof-card">
+        <h3>What it does <b>not</b> prove</h3>
+        <ul>
+          <li>That the verdict is <b>correct</b>.</li>
+          <li>That the gates ran honestly, or that the inputs were authentic.</li>
+          <li>The hash binds the merged report digest, not the full per-gate evidence
+            (limitation 13 below).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SCOPE & LIMITATIONS ============================ -->
+<section id="limits">
+  <div class="wrap">
+    <h2>Scope &amp; known limitations</h2>
+    <p class="sub">Disclosed openly, per the project&rsquo;s submission policy &mdash; nothing
+      below is hidden from reviewers or judges. This is the short version; the full audit trail
+      with per-limitation impact and roadmap is in <code>AUDIT.md</code> in the repository.
+      AEGIS produces <b>screening reports, not audits</b>.</p>
+    <ol class="limits">
+      <li><b>Pattern counts are raw text occurrences</b> (code + comments + strings), never
+        attributions. Counts alone never decide a verdict; a human/agent audit must attribute
+        them. <i>(Gate 2)</i></li>
+      <li><b>The project/library split is path-based</b> &mdash; only <code>node_modules/…</code>
+        counts as library, so a single flattened file cannot be attributed per-contract
+        automatically; case files carry that attribution manually. <i>(Gate 2)</i></li>
+      <li><b>Setter detection is narrow</b> &mdash; only <code>function setX(…)</code>
+        declarations are listed; admin mutators with other names can be missed, so the listed
+        setters are evidence, not a completeness claim. <i>(Gate 2)</i></li>
+      <li><b>Gate 2&rsquo;s verdict scope is deliberately thin</b> &mdash; it escalates only on
+        unverifiable code and project-source <code>delegatecall</code> / <code>selfdestruct</code>
+        / <code>permit</code>. Dangerous <i>combinations</i> of patterns can still return ALLOW
+        with the evidence attached: an ALLOW is a screening pass, never a clean bill of
+        health. <i>(Gate 2)</i></li>
+      <li><b>Sourcify is the trust anchor.</b> The tool trusts Sourcify&rsquo;s match and sources
+        at query time; it does not independently compare runtime bytecode, and there is no
+        second source yet (reports state <code>crossCheck: "unavailable"</code>). An outage
+        fails loudly with no verdict &mdash; never a fabricated one. Narrowed in v0.2.0
+        (bounded retries), not closed. <i>(Gate 2)</i></li>
+      <li><b>Node &ge; 18 is assumed</b> (<code>AbortSignal.timeout</code> availability).
+        <i>(Kit)</i></li>
+      <li><b>Gate 1 &ldquo;claim found&rdquo; is a content heuristic</b> &mdash; substring or
+        record-existence matching, not semantic attribution. A page that merely mentions an
+        address in a warning still &ldquo;carries&rdquo; it; the claim&rsquo;s role must still
+        be confirmed before acting. <i>(Gate 1)</i></li>
+      <li><b>Gate 1 does not discover official channels.</b> Whoever supplies the
+        &ldquo;official&rdquo; URL frames the check; without a caller-supplied domain registry,
+        a lookalike domain carrying the same claim would pass the content test. The report
+        states on every run when no registry was supplied. <i>(Gate 1)</i></li>
+      <li><b>Gate 3 is structural only.</b> It verifies no signature, recovers no signer, and
+        cannot prove a verifyingContract really belongs to the project. Held/router
+        classification is only as complete as the caller-supplied lists (only Permit2 is built
+        in); an ALLOW never replaces building and simulating the final transaction separately.
+        <i>(Gate 3)</i></li>
+      <li><b>Gate 3 types/message mismatch is WARN, not BLOCK</b> &mdash; deliberate (wallets sign
+        the declared types; undeclared message fields are not signed), but the warning must
+        actually be read. <i>(Gate 3)</i></li>
+      <li><b>Gate 4 is regex/heuristic screening.</b> Paraphrased, obfuscated, image-carried, or
+        non-English instructions can evade it; thresholds are calibrated on the kit&rsquo;s own
+        cases, not a broad labelled corpus; and text <i>discussing</i> these patterns scores
+        like text using them. Gate 4 does not fetch URLs &mdash; its input is a local file, so
+        whoever fetches the page controls its freshness. <i>(Gate 4)</i></li>
+      <li><b>The runner composes file inputs only, and its report is a digest</b> &mdash; per-gate
+        verdicts, reasons, and curated evidence, not the gates&rsquo; complete reports. The
+        reportHash binds the merged digest, not the underlying per-gate artifacts.
+        <i>(Runner)</i></li>
+      <li><b>Anchoring is testnet-only and manual.</b> The registry lives on NEAR testnet
+        (anchors carry no mainnet evidentiary weight), and anchoring is a separate step &mdash;
+        the runner does not yet anchor automatically. <i>(Anchor)</i></li>
+      <li><b>Deployer key custody is a local file</b> (testnet funds only, never committed).
+        Because records are first-write-wins and anchoring is permissionless, a leaked key
+        could only spend the account&rsquo;s testnet balance or anchor additional reports under
+        its name &mdash; it cannot alter existing anchors. <i>(Anchor)</i></li>
+    </ol>
+    <div class="closed"><b>Closed in v0.2.0:</b> Sourcify <code>partial_match</code> results are
+      no longer treated as verified &mdash; they are forced to WARN (former limitation 5).</div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================ FOOTER ============================ -->
+<footer class="site">
+  <div class="wrap">
+    <div class="shield-note"><b>Safety stance:</b> AEGIS only ever <b>reads</b>. It holds no
+      keys, signs nothing, and executes nothing &mdash; it exists so that the agents who
+      <i>do</i> execute can prove they checked first.</div>
+    <div class="row">
+      <span>Built for the NEAR Hackathon &mdash; <b>Build Beyond Boundaries</b>
+        (submission window 1&ndash;14 Nov 2026) · Tracks: AI Security &amp; Defense ·
+        Agent Economy</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <a href="https://github.com/Rainyy99/aegis" target="_blank" rel="noopener">github.com/Rainyy99/aegis</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://x.com/aegisonnear" target="_blank" rel="noopener">X: @aegisonnear</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://testnet.nearblocks.io/address/aegis-gate.testnet" target="_blank" rel="noopener">aegis-gate.testnet</a>
+    </div>
+    <p class="note" style="margin-top:16px">Case-study reports on this page were generated by the
+      AEGIS kit (runner v1.0.0) and anchored on NEAR testnet on 1 Nov 2026. Screening reports are
+      not audits; each gate&rsquo;s limitations apply &mdash; see the Scope &amp; limitations
+      section above and AUDIT.md in the repository.</p>
+  </div>
+</footer>
+
+<script>
+  // Copy-to-clipboard for hash chips. Progressive enhancement only:
+  // the page is fully readable with JavaScript disabled.
+  document.querySelectorAll("[data-copy]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.getAttribute("data-copy");
+      function done() {
+        var old = btn.textContent;
+        btn.textContent = "copied";
+        setTimeout(function () { btn.textContent = old; }, 1400);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); } catch (e) { /* leave text selectable instead */ }
+        document.body.removeChild(ta);
+        done();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

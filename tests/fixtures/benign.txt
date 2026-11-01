@@ -1,0 +1,13 @@
+Welcome to Meadow Elves, a collection of 5,000 hand-drawn elves on BNB Chain.
+
+Minting opens to the public on Friday at 15:00 UTC through our website.
+Each wallet may mint up to five elves during the public phase. The
+documentation explains rarity traits, royalties, and the roadmap for the
+season.
+
+Join the community Discord to meet other collectors and see sneak peeks
+of the artwork. The contract address will be published on this page after
+deployment, and the source code will be verified on the block explorer so
+anyone can read it before minting.
+
+Thank you for collecting with us.
