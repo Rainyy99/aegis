@@ -224,7 +224,8 @@ see `anchor/README.md`, "Account & key custody" (limitations 14–15).
 A static showcase page lives in [`demo/`](demo/) (`demo/index.html`, no
 build step, no dependencies): the four gates, the three case studies with
 their real verdicts, and the on-chain anchor proof above. It is served via
-**Vercel** from this repository. The page is a showcase — the checkers
+**Vercel** from this repository — live at https://aegis-demo-beta.vercel.app/.
+The page is a showcase — the checkers
 themselves are the CLIs in this repo, run locally as documented above.
 
 ## Why NEAR
@@ -247,10 +248,11 @@ can serve agents operating on any chain.
   `reportHash`; 45-check test suite green; NEAR **testnet** anchoring
   registry deployed with two real reports anchored and read back; demo page
   built (`demo/`).
-- **Remaining to submission (by 14 Nov 2026):** demo served via Vercel from
-  this repo; this v1.0 repo sync; demo post on X from @aegisonnear;
-  submission form (payout account `rainyy66.near`, mainnet — payout only,
-  never touched by the tooling).
+- **Submitted 6 Nov 2026:** demo served via Vercel from this repo; this v1.0
+  repo sync is the submission state of the code; demo post on X from
+  @aegisonnear; submission form filed (payout account `rainyy66.near`,
+  mainnet — payout only, never touched by the tooling). Development window
+  closes 14 Nov 2026 23:59 UTC; results announced by 18 Nov 2026 23:59 UTC.
 - **Post-hackathon:** runner-integrated automatic anchoring; mainnet
   registry; a second verification source for Gate 2 (limitation 6).
 

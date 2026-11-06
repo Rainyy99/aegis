@@ -1,4 +1,4 @@
-# AEGIS starter kit — QA / audit pass
+# AEGIS — QA / audit pass (kit v1.0.0 + runner + NEAR testnet anchor)
 
 **Date:** 28 Oct 2026 (WIB) · **Scope:** `check-contract.mjs`, the three case
 files (`cases/nonce.md`, `cases/hashstone.md`, `cases/termix.md`), the saved
@@ -542,3 +542,13 @@ minimal registry contract, deployed and exercised end-to-end on
       are first-write-wins, a leaked key could only spend the
       account's testnet balance or anchor additional reports under
       this account's name — it cannot alter existing anchors.
+
+## 9. Addendum — repo re-sync and submission (6 Nov 2026)
+
+The re-sync anticipated in §§6–7 was completed on 1 Nov 2026: the public
+repo (github.com/Rainyy99/aegis, commit `954f5bfa40e7`) carries the full
+v1.0 kit — all four gates, the runner, the anchor tooling and reports,
+and the demo — blob-for-blob identical to the local staging tree
+(re-verified 6 Nov 2026: 31/31). The project was submitted on 6 Nov 2026
+with payout account `rainyy66.near` (mainnet, payout only); the demo post
+is live from @aegisonnear. Nothing in §§1–8 was altered by this addendum.
